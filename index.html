@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ProporciónPsi — AES104</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN SYSTEM
+   Aesthetic: Clinical-arcade — dark lab meets
+   retro game terminal. Syne for headings,
+   Space Mono for numbers/code/answers.
+   Palette: deep navy + electric teal + neon mint
+   + amber warnings. Grid-breaking asymmetry.
+═══════════════════════════════════════════════ */
+:root {
+  --navy:    #0A1628;
+  --navy2:   #0F2040;
+  --navy3:   #162B52;
+  --teal:    #00C9B1;
+  --mint:    #00FFCC;
+  --purple:  #7C3AED;
+  --lavender:#A78BFA;
+  --amber:   #F59E0B;
+  --red:     #EF4444;
+  --green:   #10B981;
+  --white:   #F0F8FF;
+  --muted:   #64748B;
+  --card:    rgba(255,255,255,0.04);
+  --card-border: rgba(0,201,177,0.15);
+  --glow: 0 0 20px rgba(0,201,177,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Scanline texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.04) 2px,
+    rgba(0,0,0,0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Grid background */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,201,177,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,201,177,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SCREENS ─────────────────────────────────── */
+.screen {
+  display: none;
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  padding: 20px 16px 32px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── LOGO / BRAND ─────────────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--teal);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.brand-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--teal);
+  text-transform: uppercase;
+}
+.brand-sub {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── HERO TITLE ───────────────────────────────── */
+.hero {
+  margin: 24px 0 20px;
+}
+.hero h1 {
+  font-size: clamp(36px, 9vw, 52px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+.hero h1 .accent { color: var(--teal); }
+.hero p {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--muted);
+  font-family: 'Space Mono', monospace;
+  line-height: 1.6;
+}
+
+/* ── CARDS ────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  backdrop-filter: blur(4px);
+}
+.card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--teal);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── INPUTS ───────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.field input, .field select {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(0,201,177,0.25);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--white);
+  font-family: 'Space Mono', monospace;
+  font-size: 15px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus, .field select:focus {
+  border-color: var(--teal);
+  box-shadow: var(--glow);
+}
+.field select option { background: var(--navy2); }
+
+/* ── BUTTONS ──────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--teal);
+  color: var(--navy);
+}
+.btn-primary:hover { background: var(--mint); }
+.btn-secondary {
+  background: transparent;
+  color: var(--teal);
+  border: 1px solid var(--card-border);
+}
+.btn-secondary:hover { border-color: var(--teal); }
+.btn-purple {
+  background: var(--purple);
+  color: white;
+}
+.btn-danger {
+  background: var(--red);
+  color: white;
+}
+.btn + .btn { margin-top: 8px; }
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── TEAM COLORS ──────────────────────────────── */
+.team-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.c0 { background: #00C9B1; }
+.c1 { background: #F59E0B; }
+.c2 { background: #7C3AED; }
+.c3 { background: #EF4444; }
+.c4 { background: #10B981; }
+.c5 { background: #EC4899; }
+
+/* ── SECTION TITLE ────────────────────────────── */
+.section-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--card-border);
+}
+
+/* ════════════════════════════════════
+   SCREEN: HOME
+════════════════════════════════════ */
+#screen-home .modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.mode-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 18px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.mode-card:hover, .mode-card.selected {
+  border-color: var(--teal);
+  background: rgba(0,201,177,0.08);
+  box-shadow: var(--glow);
+}
+.mode-card .emoji { font-size: 28px; margin-bottom: 8px; }
+.mode-card .mode-name { font-size: 13px; font-weight: 700; }
+.mode-card .mode-desc { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: 'Space Mono', monospace; }
+
+/* ════════════════════════════════════
+   SCREEN: LOBBY (PROFESOR)
+════════════════════════════════════ */
+#room-code-display {
+  font-family: 'Space Mono', monospace;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--mint);
+  text-align: center;
+  padding: 20px;
+  border: 2px solid var(--teal);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  text-shadow: 0 0 20px rgba(0,255,204,0.5);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+@keyframes pulse-glow {
+  0%,100% { box-shadow: 0 0 20px rgba(0,201,177,0.3); }
+  50%      { box-shadow: 0 0 40px rgba(0,201,177,0.6); }
+}
+
+#teams-list { display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+.team-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  font-size: 14px;
+  animation: slide-in 0.3s ease;
+}
+@keyframes slide-in {
+  from { opacity:0; transform: translateX(-12px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+.team-entry .team-name { font-weight: 700; flex: 1; }
+.team-entry .team-ready {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  color: var(--teal);
+}
+
+/* ════════════════════════════════════
+   SCREEN: GAME (PREGUNTA)
+════════════════════════════════════ */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.q-counter {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+.q-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+/* Timer bar */
+.timer-wrap {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--mint));
+  border-radius: 3px;
+  transition: width 1s linear, background 0.5s;
+}
+.timer-bar.danger { background: linear-gradient(90deg, var(--amber), var(--red)); }
+
+/* Question */
+.q-category {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--purple);
+  text-transform: uppercase;
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 6px;
+}
+.q-text {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  color: var(--white);
+}
+.q-text .highlight {
+  color: var(--teal);
+  font-family: 'Space Mono', monospace;
+}
+
+/* Answer options */
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.option {
+  background: var(--card);
+  border: 2px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.option::before {
+  content: attr(data-key);
+  position: absolute;
+  top: 4px; left: 6px;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.option:hover:not(.answered) {
+  border-color: var(--teal);
+  background: rgba(0,201,177,0.1);
+  transform: translateY(-1px);
+}
+.option.selected { border-color: var(--amber); background: rgba(245,158,11,0.15); }
+.option.correct  { border-color: var(--green); background: rgba(16,185,129,0.2); color: var(--mint); }
+.option.wrong    { border-color: var(--red);   background: rgba(239,68,68,0.15);  opacity: 0.7; }
+
+/* Feedback */
+.feedback {
+  display: none;
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.feedback.show { display: block; animation: pop-in 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.feedback.correct-fb { background: rgba(16,185,129,0.15); border: 1px solid var(--green); }
+.feedback.wrong-fb   { background: rgba(239,68,68,0.1);   border: 1px solid var(--red); }
+.feedback-title { font-weight: 700; margin-bottom: 4px; font-size: 14px; }
+@keyframes pop-in {
+  from { opacity:0; transform: scale(0.9); }
+  to   { opacity:1; transform: scale(1); }
+}
+
+/* ════════════════════════════════════
+   SCREEN: LEADERBOARD
+════════════════════════════════════ */
+.leaderboard { display: flex; flex-direction: column; gap: 10px; }
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  transition: all 0.3s;
+  animation: lb-enter 0.4s ease both;
+}
+.lb-row:nth-child(1) { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08); animation-delay: 0s; }
+.lb-row:nth-child(2) { border-color: rgba(156,163,175,0.4); animation-delay: 0.05s; }
+.lb-row:nth-child(3) { border-color: rgba(180,120,60,0.4); animation-delay: 0.1s; }
+.lb-row:nth-child(n+4) { animation-delay: 0.15s; }
+@keyframes lb-enter {
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.lb-rank {
+  font-family: 'Space Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.lb-row:nth-child(1) .lb-rank { color: var(--amber); }
+.lb-row:nth-child(2) .lb-rank { color: #9CA3AF; }
+.lb-row:nth-child(3) .lb-rank { color: #B47840; }
+.lb-info { flex: 1; }
+.lb-name { font-size: 15px; font-weight: 700; }
+.lb-members { font-size: 11px; color: var(--muted); font-family: 'Space Mono', monospace; margin-top: 2px; }
+.lb-pts {
+  font-family: 'Space Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--teal);
+  flex-shrink: 0;
+}
+.lb-pts span { font-size: 11px; color: var(--muted); display: block; text-align: right; }
+
+/* ── BAR CHART ───────────────────────────────── */
+.bar-chart { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 12px; font-weight: 600; width: 100px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { flex: 1; height: 20px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  display: flex;
+  align-items: center;
+  padding-right: 6px;
+  justify-content: flex-end;
+}
+.bar-fill span { font-size: 10px; font-family: 'Space Mono', monospace; font-weight: 700; color: var(--navy); }
+
+/* ── BADGE / STATUS ───────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-family: 'Space Mono', monospace;
+}
+.badge-teal  { background: rgba(0,201,177,0.2);  color: var(--teal); }
+.badge-amber { background: rgba(245,158,11,0.2); color: var(--amber); }
+.badge-green { background: rgba(16,185,129,0.2); color: var(--green); }
+.badge-red   { background: rgba(239,68,68,0.2);  color: var(--red); }
+
+/* ── DIVIDER ──────────────────────────────────── */
+.divider { height: 1px; background: var(--card-border); margin: 20px 0; }
+
+/* ── TOAST ────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--teal);
+  color: var(--navy);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  z-index: 9999;
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── STEP INDICATOR ───────────────────────────── */
+.steps {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+.step {
+  flex: 1;
+  height: 4px;
+  background: var(--card-border);
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+.step.done { background: var(--teal); }
+.step.current { background: var(--amber); }
+
+/* ── PULSE ANIMATION ──────────────────────────── */
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.blinking { animation: blink 1.2s ease-in-out infinite; }
+
+/* ── SCROLLABLE AREA ──────────────────────────── */
+.scroll-area { overflow-y: auto; flex: 1; }
+
+/* ── RESPONSIVE ADJUSTMENT ────────────────────── */
+@media (max-width: 360px) {
+  .options { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 32px; }
+}
+
+/* ── FINAL SCREEN TROPHY ─────────────────────── */
+.trophy-wrap {
+  text-align: center;
+  padding: 24px 0;
+}
+.trophy {
+  font-size: 72px;
+  display: block;
+  margin-bottom: 12px;
+  animation: trophy-bounce 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes trophy-bounce {
+  from { opacity:0; transform: scale(0.3) rotate(-15deg); }
+  to   { opacity:1; transform: scale(1) rotate(0deg); }
+}
+.winner-name {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--amber);
+  margin-bottom: 4px;
+}
+.winner-pts {
+  font-family: 'Space Mono', monospace;
+  font-size: 16px;
+  color: var(--teal);
+}
+
+/* ── LIVE SCORE TICKER ────────────────────────── */
+#live-ticker {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+#live-ticker::-webkit-scrollbar { display: none; }
+.ticker-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.ticker-chip .t-pts {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+/* ── WAITING SPINNER ──────────────────────────── */
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--card-border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 20px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1: HOME
+══════════════════════════════════════════ -->
+<section id="screen-home" class="screen active">
+  <div class="brand">
+    <div class="brand-icon">🧠</div>
+    <div>
+      <div class="brand-name">ProporciónPsi</div>
+      <div class="brand-sub">AES104 · UDLA 2026</div>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1>Compite con<br><span class="accent">razones.</span></h1>
+    <p>// Juego colaborativo por equipos<br>// Casos clínicos de psicología<br>// Tiempo real en tu celular</p>
+  </div>
+
+  <div class="section-title">¿Quién eres?</div>
+  <div class="modes">
+    <div class="mode-card selected" onclick="selectMode('team')" id="mode-team">
+      <div class="emoji">👥</div>
+      <div class="mode-name">Soy equipo</div>
+      <div class="mode-desc">Unirme a una sala</div>
+    </div>
+    <div class="mode-card" onclick="selectMode('host')" id="mode-host">
+      <div class="emoji">🎓</div>
+      <div class="mode-name">Soy profesor/a</div>
+      <div class="mode-desc">Crear y controlar</div>
+    </div>
+  </div>
+
+  <!-- TEAM JOIN FORM -->
+  <div id="team-form">
+    <div class="field">
+      <label>Código de sala</label>
+      <input id="join-code" type="text" maxlength="6" placeholder="ej: ABC123" autocomplete="off"
+             oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="field">
+      <label>Nombre del equipo</label>
+      <input id="team-name" type="text" maxlength="20" placeholder="ej: Equipo Pavlov">
+    </div>
+    <div class="field">
+      <label>Integrantes (nombres separados por coma)</label>
+      <input id="team-members" type="text" maxlength="80" placeholder="ej: Ana, Camilo, Sofía">
+    </div>
+    <div class="field">
+      <label>Color del equipo</label>
+      <select id="team-color">
+        <option value="0">🟢 Teal</option>
+        <option value="1">🟡 Ámbar</option>
+        <option value="2">🟣 Púrpura</option>
+        <option value="3">🔴 Rojo</option>
+        <option value="4">🟩 Verde</option>
+        <option value="5">🩷 Rosa</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="joinGame()">⚡ Unirse al juego</button>
+  </div>
+
+  <!-- HOST FORM -->
+  <div id="host-form" style="display:none">
+    <div class="card">
+      <div class="card-label">Configuración de la sesión</div>
+      <div class="field">
+        <label>Tiempo por pregunta (segundos)</label>
+        <select id="host-timer">
+          <option value="30">30 segundos</option>
+          <option value="45" selected>45 segundos</option>
+          <option value="60">60 segundos</option>
+          <option value="90">90 segundos</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Número de preguntas</label>
+        <select id="host-qcount">
+          <option value="5">5 preguntas (rápido)</option>
+          <option value="8" selected>8 preguntas (normal)</option>
+          <option value="12">12 preguntas (completo)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="createGame()">🚀 Crear sala</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2: LOBBY (HOST WAITING ROOM)
+══════════════════════════════════════════ -->
+<section id="screen-lobby" class="screen">
+  <div class="brand">
+    <div class="brand-icon">🧠</div>
+    <div><div class="brand-name">ProporciónPsi</div></div>
+  </div>
+
+  <div class="section-title" style="margin-top:16px">Código de sala</div>
+  <div id="room-code-display">------</div>
+  <p style="text-align:center; font-size:12px; color:var(--muted); font-family:'Space Mono',monospace; margin-bottom:20px;">
+    Los equipos ingresan este código desde sus celulares
+  </p>
+
+  <div class="section-title">
+    Equipos conectados
+    <span id="team-count" class="badge badge-teal">0</span>
+  </div>
+  <div id="teams-list">
+    <div style="text-align:center; padding:20px; color:var(--muted); font-size:13px;">
+      <div class="spinner"></div>
+      Esperando equipos...
+    </div>
+  </div>
+
+  <div style="margin-top: auto; padding-top: 20px;">
+    <button class="btn btn-primary" id="start-btn" onclick="startGame()" disabled>
+      ▶ Iniciar juego
+    </button>
+    <button class="btn btn-secondary" onclick="copyRoomLink()" style="margin-top:8px">
+      🔗 Copiar link de sala
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3: TEAM WAITING ROOM
+══════════════════════════════════════════ -->
+<section id="screen-waiting" class="screen">
+  <div class="brand">
+    <div class="brand-icon">🧠</div>
+    <div><div class="brand-name">ProporciónPsi</div></div>
+  </div>
+
+  <div style="margin-top:32px; text-align:center">
+    <div style="font-size:48px; margin-bottom:12px">👾</div>
+    <div style="font-size:22px; font-weight:800" id="waiting-team-name">Tu equipo</div>
+    <div style="font-size:13px; color:var(--muted); font-family:'Space Mono',monospace; margin:8px 0" id="waiting-members"></div>
+    <div class="badge badge-green" style="margin: 8px auto; display:inline-flex">✓ Conectado</div>
+  </div>
+
+  <div class="card" style="margin-top:28px">
+    <div class="card-label">Sala</div>
+    <div style="font-family:'Space Mono',monospace; font-size:28px; font-weight:700; color:var(--teal); letter-spacing:0.15em" id="waiting-code"></div>
+  </div>
+
+  <div style="text-align:center; margin-top:24px; color:var(--muted); font-size:13px" class="blinking">
+    ⏳ Esperando que el profesor/a inicie el juego...
+  </div>
+
+  <div id="live-ticker" style="margin-top:24px"></div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 4: QUESTION
+══════════════════════════════════════════ -->
+<section id="screen-question" class="screen">
+  <div class="game-header">
+    <div class="q-counter">
+      <span id="q-num">1</span> / <span id="q-total">8</span>
+    </div>
+    <div id="live-ticker-mini" style="display:flex; gap:6px; overflow-x:auto; scrollbar-width:none"></div>
+    <div class="q-score">
+      🏆 <span id="my-score">0</span>
+    </div>
+  </div>
+
+  <div class="steps" id="steps-bar"></div>
+
+  <div class="timer-wrap">
+    <div class="timer-bar" id="timer-bar"></div>
+  </div>
+
+  <div class="q-category" id="q-category">Razón simple</div>
+  <div class="q-text" id="q-text"></div>
+
+  <div class="options" id="options-grid"></div>
+
+  <div class="feedback" id="feedback-box">
+    <div class="feedback-title" id="feedback-title"></div>
+    <div id="feedback-body"></div>
+  </div>
+
+  <div id="next-area" style="display:none; margin-top:auto">
+    <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()">
+      Siguiente pregunta →
+    </button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 5: BETWEEN QUESTIONS (HOST)
+══════════════════════════════════════════ -->
+<section id="screen-between" class="screen">
+  <div class="section-title" style="margin-top:20px">Marcador en vivo</div>
+  <div id="bar-chart-between" class="bar-chart"></div>
+  <div class="divider"></div>
+  <div style="text-align:center; color:var(--muted); font-size:13px; margin-bottom:20px" id="between-msg"></div>
+  <button class="btn btn-primary" id="next-q-host-btn" onclick="hostNextQuestion()">
+    ▶ Siguiente pregunta
+  </button>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 6: FINAL LEADERBOARD
+══════════════════════════════════════════ -->
+<section id="screen-final" class="screen">
+  <div class="trophy-wrap" id="trophy-area"></div>
+
+  <div class="section-title">Resultado final</div>
+  <div id="bar-chart-final" class="bar-chart"></div>
+
+  <div class="divider"></div>
+  <div class="leaderboard" id="final-leaderboard"></div>
+
+  <div style="margin-top:24px">
+    <button class="btn btn-secondary" onclick="goHome()">↩ Volver al inicio</button>
+  </div>
+</section>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     FIREBASE + GAME LOGIC
+══════════════════════════════════════════ -->
+<!-- Firebase v9 compat (CDN, no build step needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+/* ════════════════════════════════════════════
+   FIREBASE CONFIG
+   ─────────────────────────────────────────────
+   INSTRUCCIONES PARA EL PROFESOR:
+   1. Ve a https://console.firebase.google.com
+   2. Crea un proyecto gratuito (plan Spark)
+   3. En "Realtime Database" → crear base de datos
+      en modo test (reglas abiertas para empezar)
+   4. Reemplaza el objeto firebaseConfig de abajo
+      con tu configuración (Settings → General → Web)
+   ─────────────────────────────────────────────
+   ⚠ El código de ejemplo usa una base de datos
+   pública de demostración. Para uso en clases
+   reemplaza con tu propia configuración.
+════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDEMO-replace-with-your-own-key",
+  authDomain: "proporcionpsi-demo.firebaseapp.com",
+  databaseURL: "https://proporcionpsi-demo-default-rtdb.firebaseio.com",
+  projectId: "proporcionpsi-demo",
+  storageBucket: "proporcionpsi-demo.appspot.com",
+  messagingSenderId: "000000000000",
+  appId: "1:000000000000:web:demo"
+};
+
+// ── OFFLINE / DEMO MODE ───────────────────────
+// Si Firebase no está configurado, el juego corre
+// en modo local (un solo dispositivo, sin sync).
+let db = null;
+let firebaseOk = false;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  firebaseOk = true;
+} catch(e) {
+  console.warn("Firebase no configurado — modo demo local activado");
+}
+
+/* ════════════════════════════════════════════
+   BANK DE PREGUNTAS
+   Casos clínicos de psicología.
+   Todas las preguntas son de razones,
+   proporciones o regla de tres.
+════════════════════════════════════════════ */
+const QUESTIONS = [
+  // ── RAZÓN SIMPLE ──────────────────────────
+  {
+    category: "Razón simple",
+    text: "En un centro de salud mental hay **24 casos** de ansiedad y **18** de depresión. ¿Cuál es la razón simplificada ansiedad:depresión?",
+    options: ["4:3","3:2","6:4","8:6"],
+    correct: 0,
+    explanation: "MCD(24,18) = 6. Dividimos: 24÷6 = 4, 18÷6 = 3. Razón = 4:3 (por cada 4 casos de ansiedad hay 3 de depresión).",
+    points: 100,
+  },
+  {
+    category: "Razón simple",
+    text: "Una psicóloga atiende **15 pacientes** en 5 días. ¿Cuál es la razón de atención diaria?",
+    options: ["3 pac/día","5 pac/día","2 pac/día","4 pac/día"],
+    correct: 0,
+    explanation: "15 pacientes ÷ 5 días = 3 pacientes por día. Razón = 3:1.",
+    points: 100,
+  },
+  {
+    category: "Razón porcentual",
+    text: "De **60 pacientes** evaluados, **18 presentan** TEPT. ¿Qué porcentaje representa?",
+    options: ["30%","25%","18%","33%"],
+    correct: 0,
+    explanation: "18/60 = 0,30 = 30%. Razón porcentual: 30 de cada 100 pacientes presenta TEPT.",
+    points: 100,
+  },
+  // ── RAZÓN COMPUESTA ───────────────────────
+  {
+    category: "Razón compuesta",
+    text: "Un estudio registra **2 diagnósticos** por cada **5 derivaciones**, y **3 altas** por cada **4 diagnósticos**. ¿Cuál es la razón compuesta altas:derivaciones simplificada?",
+    options: ["3:10","6:20","1:3","2:5"],
+    correct: 0,
+    explanation: "Razón 1: 2/5. Razón 2: 3/4. Compuesta = (2/5)×(3/4) = 6/20. MCD(6,20)=2 → 3:10. Por cada 10 derivaciones hay 3 altas.",
+    points: 200,
+  },
+  {
+    category: "Razón compuesta",
+    text: "Hay 3 psicólogos que atienden 4 pacientes cada uno por turno. ¿Cuál es la razón compuesta total de pacientes por turno vs. por semana (5 turnos)?",
+    options: ["1:5","3:20","60:12","12:1"],
+    correct: 0,
+    explanation: "Total pacientes/turno = 3×4 = 12. En 5 turnos = 60. Razón turno:semana = 12:60 = 1:5.",
+    points: 200,
+  },
+  // ── REGLA DE TRES DIRECTA ─────────────────
+  {
+    category: "Regla de tres directa",
+    text: "En **4 semanas** de terapia se realizan **12 sesiones**. ¿Cuántas sesiones habrá en **10 semanas**?",
+    options: ["30","25","40","24"],
+    correct: 0,
+    explanation: "B₂ = (A₂ × B₁) / A₁ = (10 × 12) / 4 = 30 sesiones. Es directa: más semanas → más sesiones.",
+    points: 100,
+  },
+  {
+    category: "Regla de tres directa",
+    text: "**3 psicólogos** aplican **45 evaluaciones** en una semana. ¿Cuántas evaluaciones aplicarán **7 psicólogos**?",
+    options: ["105","75","90","120"],
+    correct: 0,
+    explanation: "B₂ = (7 × 45) / 3 = 315 / 3 = 105 evaluaciones.",
+    points: 100,
+  },
+  {
+    category: "Regla de tres directa",
+    text: "Si **5 pacientes** requieren **2 horas** de evaluación, ¿cuántas horas se necesitan para evaluar a **15 pacientes**?",
+    options: ["6","8","10","4"],
+    correct: 0,
+    explanation: "B₂ = (15 × 2) / 5 = 6 horas. Relación directa: más pacientes → más tiempo.",
+    points: 100,
+  },
+  // ── REGLA DE TRES INVERSA ─────────────────
+  {
+    category: "Regla de tres inversa",
+    text: "**4 terapeutas** tardan **12 días** en atender una lista de espera. ¿Cuántos días tardarían **8 terapeutas**?",
+    options: ["6","24","3","8"],
+    correct: 0,
+    explanation: "B₂ = (A₁ × B₁) / A₂ = (4 × 12) / 8 = 6 días. Inversa: más terapeutas → menos días.",
+    points: 150,
+  },
+  {
+    category: "Regla de tres inversa",
+    text: "Un equipo de **3 psicólogos** tarda **20 días** en evaluar un grupo. ¿Cuántos días tardarían **5 psicólogos**?",
+    options: ["12","33","8","15"],
+    correct: 0,
+    explanation: "B₂ = (3 × 20) / 5 = 12 días. Más psicólogos → menos días → inversa.",
+    points: 150,
+  },
+  // ── ¡TRAMPA! ──────────────────────────────
+  {
+    category: "⚠️ ¡Trampa!",
+    text: "**6 psicólogos** atienden **180 pacientes** en un día. ¿Cuántos pacientes atiende **1 psicólogo** en el mismo día? (¿directa o inversa?)",
+    options: ["30 (directa)","180 (inversa)","1080 (inversa)","36 (directa)"],
+    correct: 0,
+    explanation: "¡Trampa! Menos psicólogos → menos pacientes → DIRECTA. B₂ = (1 × 180) / 6 = 30. No es inversa porque la cantidad de pacientes sí depende de cuántos profesionales hay.",
+    points: 200,
+  },
+  // ── REGLA DE TRES COMPUESTA ───────────────
+  {
+    category: "Regla de tres compuesta",
+    text: "**5 psicólogos** en **4 días** atienden **200 consultas**. ¿Cuántas consultas atenderán **8 psicólogos** en **6 días**?",
+    options: ["480","320","600","240"],
+    correct: 0,
+    explanation: "V1 directa (más psicólogos → más consultas): 8/5. V2 directa (más días → más consultas): 6/4.\nx = 200 × (8/5) × (6/4) = 200 × 1.6 × 1.5 = 480.",
+    points: 300,
+  },
+  {
+    category: "Regla de tres compuesta",
+    text: "Un servicio con **6 psicólogos** atiende **720 pacientes/semana** (8 h/día, 5 días). ¿Cuántos pacientes atiende **1 psicólogo por día**?",
+    options: ["24","18","30","12"],
+    correct: 0,
+    explanation: "720 / 6 psicólogos = 120 pac/psicólogo/semana. 120 / 5 días = 24 pac/psicólogo/día.",
+    points: 200,
+  },
+  // ── PROPORCIÓN ────────────────────────────
+  {
+    category: "Proporción",
+    text: "La razón hombres:mujeres en lista de espera es **3:5**. Si hay **960 pacientes** en total, ¿cuántas mujeres hay?",
+    options: ["600","360","480","540"],
+    correct: 0,
+    explanation: "Total partes = 3+5 = 8. Mujeres = (5/8) × 960 = 600. Hombres = (3/8) × 960 = 360.",
+    points: 150,
+  },
+  {
+    category: "Proporción",
+    text: "Si **4/20 = x/150**, ¿cuánto vale x?",
+    options: ["30","20","40","25"],
+    correct: 0,
+    explanation: "x = (4 × 150) / 20 = 600 / 20 = 30. Propiedad fundamental de proporciones: producto de extremos = producto de medios.",
+    points: 150,
+  },
+  {
+    category: "Proporción",
+    text: "Un equipo evalúa **12 pacientes** en **3 horas**. Manteniendo la misma proporción, ¿cuántos pacientes evaluará en **7,5 horas**?",
+    options: ["30","28","36","24"],
+    correct: 0,
+    explanation: "x = (7.5 × 12) / 3 = 90 / 3 = 30 pacientes. Proporción directa.",
+    points: 100,
+  },
+];
+
+/* ════════════════════════════════════════════
+   TEAM COLORS
+════════════════════════════════════════════ */
+const TEAM_COLORS = ["#00C9B1","#F59E0B","#7C3AED","#EF4444","#10B981","#EC4899"];
+const TEAM_EMOJIS = ["🟢","🟡","🟣","🔴","🟩","🩷"];
+
+/* ════════════════════════════════════════════
+   GAME STATE
+════════════════════════════════════════════ */
+let state = {
+  mode: null,            // 'team' | 'host'
+  roomCode: null,
+  teamId: null,
+  teamName: null,
+  teamMembers: null,
+  teamColor: 0,
+  score: 0,
+  currentQ: 0,
+  questions: [],         // shuffled subset
+  timerInterval: null,
+  timerSeconds: 45,
+  answered: false,
+  gameConfig: { timer: 45, qcount: 8 },
+};
+
+let roomRef = null;
+let teamsRef = null;
+let gameRef = null;
+
+/* ════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════ */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function toast(msg, duration=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function selectMode(mode) {
+  document.getElementById('mode-team').classList.toggle('selected', mode==='team');
+  document.getElementById('mode-host').classList.toggle('selected', mode==='host');
+  document.getElementById('team-form').style.display = mode==='team'?'':'none';
+  document.getElementById('host-form').style.display = mode==='host'?'':'none';
+}
+
+function formatQ(text) {
+  return text.replace(/\*\*(.+?)\*\*/g, '<span class="highlight">$1</span>');
+}
+
+/* ════════════════════════════════════════════
+   MODE: HOST — CREATE GAME
+════════════════════════════════════════════ */
+async function createGame() {
+  const timer = parseInt(document.getElementById('host-timer').value);
+  const qcount = parseInt(document.getElementById('host-qcount').value);
+  const code = genCode();
+
+  state.mode = 'host';
+  state.roomCode = code;
+  state.gameConfig = { timer, qcount };
+  state.questions = shuffle(QUESTIONS).slice(0, qcount);
+
+  document.getElementById('room-code-display').textContent = code;
+  show('screen-lobby');
+
+  if (firebaseOk) {
+    roomRef = db.ref(`rooms/${code}`);
+    teamsRef = roomRef.child('teams');
+    gameRef  = roomRef.child('game');
+
+    await roomRef.set({
+      code,
+      status: 'lobby',
+      config: { timer, qcount },
+      createdAt: Date.now(),
+    });
+
+    // Watch for teams joining
+    teamsRef.on('value', snap => {
+      const teams = snap.val() || {};
+      renderTeamsList(teams);
+    });
+
+    // Watch for game state changes (teams need this too)
+    gameRef.on('value', snap => {
+      const g = snap.val();
+      if (!g) return;
+      if (g.status === 'question' && state.mode === 'host') {
+        // host view: show between-question screen while teams answer
+      }
+    });
+
+  } else {
+    // Demo mode: simulate locally
+    renderTeamsList({});
+    toast("🟡 Modo demo — sin Firebase. Prueba el flujo completo localmente.");
+  }
+}
+
+function renderTeamsList(teams) {
+  const list = document.getElementById('teams-list');
+  const entries = Object.values(teams);
+  document.getElementById('team-count').textContent = entries.length;
+  document.getElementById('start-btn').disabled = entries.length < 1;
+
+  if (entries.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">
+      <div class="spinner"></div>Esperando equipos...</div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map(t => `
+    <div class="team-entry">
+      <div class="team-dot c${t.color}"></div>
+      <div class="team-name">${t.name}</div>
+      <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace">${t.members}</div>
+      <div class="team-ready">✓ listo</div>
+    </div>`).join('');
+}
+
+async function startGame() {
+  if (!firebaseOk) {
+    // Demo: go directly to question mode as host
+    state.currentQ = 0;
+    showQuestion();
+    return;
+  }
+
+  await gameRef.set({
+    status: 'question',
+    questionIndex: 0,
+    startedAt: Date.now(),
+  });
+
+  // Host goes to between-questions view (teams get the question)
+  showBetweenScreen(0, true);
+}
+
+/* ════════════════════════════════════════════
+   MODE: TEAM — JOIN GAME
+════════════════════════════════════════════ */
+async function joinGame() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  const name = document.getElementById('team-name').value.trim();
+  const members = document.getElementById('team-members').value.trim();
+  const color = parseInt(document.getElementById('team-color').value);
+
+  if (!code || code.length < 4) { toast('⚠️ Ingresa el código de sala'); return; }
+  if (!name) { toast('⚠️ Ingresa el nombre del equipo'); return; }
+  if (!members) { toast('⚠️ Ingresa los integrantes'); return; }
+
+  state.mode = 'team';
+  state.roomCode = code;
+  state.teamName = name;
+  state.teamMembers = members;
+  state.teamColor = color;
+  state.teamId = name.replace(/\s+/g,'_') + '_' + Date.now().toString(36);
+  state.score = 0;
+
+  document.getElementById('waiting-team-name').textContent = name;
+  document.getElementById('waiting-members').textContent = members;
+  document.getElementById('waiting-code').textContent = code;
+  show('screen-waiting');
+
+  if (firebaseOk) {
+    roomRef  = db.ref(`rooms/${code}`);
+    teamsRef = roomRef.child('teams');
+    gameRef  = roomRef.child('game');
+
+    // Load room questions
+    const roomSnap = await roomRef.once('value');
+    const room = roomSnap.val();
+    if (!room) { toast('❌ Sala no encontrada'); show('screen-home'); return; }
+    state.gameConfig = room.config || { timer: 45, qcount: 8 };
+
+    // Register team
+    await teamsRef.child(state.teamId).set({
+      id: state.teamId,
+      name, members, color,
+      score: 0,
+      answers: {},
+    });
+
+    // Load questions (host defined order from Firebase if stored, else local shuffle)
+    state.questions = shuffle(QUESTIONS).slice(0, state.gameConfig.qcount);
+
+    // Watch game status
+    gameRef.on('value', snap => {
+      const g = snap.val();
+      if (!g) return;
+      if (g.status === 'question') {
+        state.currentQ = g.questionIndex || 0;
+        show('screen-question');
+        showQuestion();
+      }
+      if (g.status === 'finished') {
+        showFinalScreen();
+      }
+    });
+
+    // Live ticker
+    teamsRef.on('value', snap => {
+      updateLiveTicker(Object.values(snap.val()||{}));
+    });
+
+  } else {
+    // Demo: immediate start
+    setTimeout(() => {
+      state.questions = shuffle(QUESTIONS).slice(0,5);
+      state.currentQ = 0;
+      show('screen-question');
+      showQuestion();
+    }, 1500);
+  }
+}
+
+/* ════════════════════════════════════════════
+   GAME FLOW
+════════════════════════════════════════════ */
+function showQuestion() {
+  const q = state.questions[state.currentQ];
+  if (!q) { showFinalScreen(); return; }
+
+  state.answered = false;
+  state.timerSeconds = state.gameConfig.timer;
+
+  // Steps bar
+  const steps = document.getElementById('steps-bar');
+  steps.innerHTML = state.questions.map((_,i) =>
+    `<div class="step ${i<state.currentQ?'done':i===state.currentQ?'current':''}"></div>`
+  ).join('');
+
+  // Counter
+  document.getElementById('q-num').textContent = state.currentQ+1;
+  document.getElementById('q-total').textContent = state.questions.length;
+  document.getElementById('my-score').textContent = state.score;
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').innerHTML = formatQ(q.text);
+
+  // Options
+  const keys = ['A','B','C','D'];
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = q.options.map((opt,i) => `
+    <div class="option" data-idx="${i}" data-key="${keys[i]}"
+         onclick="selectAnswer(${i})">
+      ${opt}
+    </div>`).join('');
+
+  // Feedback reset
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback';
+  document.getElementById('next-area').style.display = 'none';
+
+  // Timer
+  startTimer(q);
+}
+
+let timerInterval = null;
+
+function startTimer(q) {
+  clearInterval(timerInterval);
+  let remaining = state.gameConfig.timer;
+  const bar = document.getElementById('timer-bar');
+  bar.style.width = '100%';
+  bar.className = 'timer-bar';
+
+  timerInterval = setInterval(() => {
+    remaining--;
+    const pct = (remaining / state.gameConfig.timer) * 100;
+    bar.style.width = pct + '%';
+    if (pct < 30) bar.className = 'timer-bar danger';
+
+    if (remaining <= 0) {
+      clearInterval(timerInterval);
+      if (!state.answered) {
+        timeOut(q);
+      }
+    }
+  }, 1000);
+}
+
+function selectAnswer(idx) {
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(timerInterval);
+
+  const q = state.questions[state.currentQ];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(o => o.classList.add('answered'));
+
+  const selected = document.querySelector(`.option[data-idx="${idx}"]`);
+  const correct  = document.querySelector(`.option[data-idx="${q.correct}"]`);
+
+  const isCorrect = idx === q.correct;
+
+  if (isCorrect) {
+    // Bonus por tiempo restante
+    const bar = document.getElementById('timer-bar');
+    const pct = parseFloat(bar.style.width) / 100;
+    const bonus = Math.round(q.points * pct);
+    state.score += bonus;
+    document.getElementById('my-score').textContent = state.score;
+    showFeedback(true, q, bonus);
+    selected.classList.add('correct');
+  } else {
+    selected.classList.add('wrong');
+    correct.classList.add('correct');
+    showFeedback(false, q, 0);
+  }
+
+  // Sync score to Firebase
+  if (firebaseOk && state.teamId) {
+    teamsRef.child(state.teamId).update({
+      score: state.score,
+      [`answers/${state.currentQ}`]: { idx, correct: isCorrect },
+    });
+  }
+
+  document.getElementById('next-area').style.display = 'block';
+}
+
+function timeOut(q) {
+  state.answered = true;
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(o => o.classList.add('answered'));
+  document.querySelector(`.option[data-idx="${q.correct}"]`).classList.add('correct');
+  showFeedback(false, q, 0, true);
+  document.getElementById('next-area').style.display = 'block';
+}
+
+function showFeedback(correct, q, bonus, timeout=false) {
+  const fb = document.getElementById('feedback-box');
+  const title = document.getElementById('feedback-title');
+  const body  = document.getElementById('feedback-body');
+
+  if (timeout) {
+    fb.className = 'feedback wrong-fb show';
+    title.textContent = '⏱ ¡Tiempo agotado!';
+  } else if (correct) {
+    fb.className = 'feedback correct-fb show';
+    title.innerHTML = `✅ ¡Correcto! +${bonus} pts`;
+  } else {
+    fb.className = 'feedback wrong-fb show';
+    title.textContent = '❌ Incorrecto';
+  }
+  body.textContent = q.explanation;
+}
+
+function nextQuestion() {
+  state.currentQ++;
+  if (state.currentQ >= state.questions.length) {
+    // Push final score
+    if (firebaseOk && state.teamId) {
+      teamsRef.child(state.teamId).update({ score: state.score, done: true });
+    }
+    showFinalScreen();
+  } else {
+    showQuestion();
+  }
+}
+
+/* ── HOST: between questions ─────────────────── */
+function showBetweenScreen(qIdx, firstTime=false) {
+  state.currentQ = qIdx;
+  const msg = firstTime
+    ? '¡Juego iniciado! Los equipos están respondiendo...'
+    : `Pregunta ${qIdx} completada. ¿Continuar?`;
+  document.getElementById('between-msg').textContent = msg;
+  show('screen-between');
+
+  if (firebaseOk) {
+    teamsRef.once('value', snap => {
+      renderBarChart('bar-chart-between', Object.values(snap.val()||{}));
+    });
+    teamsRef.on('value', snap => {
+      renderBarChart('bar-chart-between', Object.values(snap.val()||{}));
+    });
+  }
+}
+
+async function hostNextQuestion() {
+  const nextIdx = state.currentQ + 1;
+  if (nextIdx >= state.questions.length) {
+    if (firebaseOk) await gameRef.update({ status: 'finished' });
+    showFinalScreen();
+    return;
+  }
+  if (firebaseOk) await gameRef.update({ status: 'question', questionIndex: nextIdx });
+  showBetweenScreen(nextIdx);
+}
+
+/* ════════════════════════════════════════════
+   FINAL SCREEN
+════════════════════════════════════════════ */
+async function showFinalScreen() {
+  show('screen-final');
+
+  let teams = [];
+  if (firebaseOk && teamsRef) {
+    const snap = await teamsRef.once('value');
+    teams = Object.values(snap.val()||{});
+  } else {
+    teams = [{ name: state.teamName||'Tu equipo', members: state.teamMembers||'', color:0, score: state.score }];
+  }
+
+  teams.sort((a,b) => b.score - a.score);
+  const winner = teams[0];
+  const maxScore = winner?.score || 1;
+
+  // Trophy
+  const trophyArea = document.getElementById('trophy-area');
+  trophyArea.innerHTML = `
+    <span class="trophy">🏆</span>
+    <div class="winner-name">${winner?.name || '—'}</div>
+    <div class="winner-pts">${winner?.score || 0} puntos</div>
+  `;
+
+  // Bar chart
+  renderBarChart('bar-chart-final', teams);
+
+  // Leaderboard
+  const lb = document.getElementById('final-leaderboard');
+  const medals = ['🥇','🥈','🥉'];
+  lb.innerHTML = teams.map((t,i) => `
+    <div class="lb-row">
+      <div class="lb-rank">${medals[i]||i+1}</div>
+      <div class="team-dot c${t.color}"></div>
+      <div class="lb-info">
+        <div class="lb-name">${t.name}</div>
+        <div class="lb-members">${t.members}</div>
+      </div>
+      <div class="lb-pts">${t.score} <span>pts</span></div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════════════ */
+function renderBarChart(containerId, teams) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const sorted = [...teams].sort((a,b) => b.score-a.score);
+  const max = sorted[0]?.score || 1;
+
+  container.innerHTML = sorted.map((t,i) => {
+    const pct = Math.max(4, Math.round((t.score/max)*100));
+    return `
+    <div class="bar-row">
+      <div class="bar-label" title="${t.name}">${t.name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%; background:${TEAM_COLORS[t.color]||'var(--teal)'}">
+          <span>${t.score}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateLiveTicker(teams) {
+  const sorted = [...teams].sort((a,b) => b.score-a.score);
+  ['live-ticker','live-ticker-mini'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = sorted.map(t => `
+      <div class="ticker-chip">
+        <div class="team-dot c${t.color}"></div>
+        <span>${t.name}</span>
+        <span class="t-pts">${t.score}</span>
+      </div>`).join('');
+  });
+}
+
+function copyRoomLink() {
+  const url = `${window.location.href.split('?')[0]}?room=${state.roomCode}`;
+  navigator.clipboard.writeText(url).then(() => toast('🔗 Link copiado'));
+}
+
+function goHome() {
+  if (firebaseOk && roomRef) {
+    roomRef.off(); teamsRef?.off(); gameRef?.off();
+  }
+  state = {
+    mode:null,roomCode:null,teamId:null,teamName:null,
+    teamMembers:null,teamColor:0,score:0,currentQ:0,
+    questions:[],timerInterval:null,timerSeconds:45,
+    answered:false,gameConfig:{timer:45,qcount:8}
+  };
+  show('screen-home');
+}
+
+/* ── Auto-fill room code from URL param ─────── */
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const room = params.get('room');
+  if (room) {
+    document.getElementById('join-code').value = room;
+    selectMode('team');
+    toast(`📋 Sala ${room} detectada`);
+  }
+  selectMode('team');
+});
+</script>
+</body>
+</html>
