@@ -892,15 +892,19 @@ body::after {
    pública de demostración. Para uso en clases
    reemplaza con tu propia configuración.
 ════════════════════════════════════════════ */
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDEMO-replace-with-your-own-key",
-  authDomain: "proporcionpsi-demo.firebaseapp.com",
-  databaseURL: "https://proporcionpsi-demo-default-rtdb.firebaseio.com",
-  projectId: "proporcionpsi-demo",
-  storageBucket: "proporcionpsi-demo.appspot.com",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:demo"
+  apiKey: "AIzaSyAYtUFYrU-cDXSrSp1JkG52nC3n88qi1MQ",
+  authDomain: "proporcionpsi.firebaseapp.com",
+  databaseURL: "https://proporcionpsi-default-rtdb.firebaseio.com",
+  projectId: "proporcionpsi",
+  storageBucket: "proporcionpsi.firebasestorage.app",
+  messagingSenderId: "511749176348",
+  appId: "1:511749176348:web:f268e1c1bf9222cadd73d9"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 // ── OFFLINE / DEMO MODE ───────────────────────
 // Si Firebase no está configurado, el juego corre
